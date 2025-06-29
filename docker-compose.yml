@@ -1,0 +1,8 @@
+services:
+  client:
+    image: client
+    build: ./client
+  server:
+    image: server
+    build: ./service
+  
