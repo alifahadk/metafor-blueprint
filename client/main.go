@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano()) // for jitter
 
 	// Command-line flags
 	method := flag.String("method", "GET", "HTTP method to use")
