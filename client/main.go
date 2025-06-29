@@ -1,9 +1,9 @@
 package client
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -49,21 +49,31 @@ func GetWithRetry(baseURL, endpoint string, timeout time.Duration, retries int) 
 	return false, time.Since(start), nil, fmt.Errorf("all %d attempts failed", retries+1)
 }
 
-// LogRequestResult logs the outcome of the HTTP request to a log file.
-func LogRequestResult(success bool, duration time.Duration, err error) error {
-	logFile, fileErr := os.OpenFile("request.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// LogRequestResultCSV appends the request result to a CSV file.
+func LogRequestResultCSV(success bool, duration time.Duration, err error, url string) error {
+	file, fileErr := os.OpenFile("request_log.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if fileErr != nil {
-		return fmt.Errorf("could not open log file: %w", fileErr)
+		return fileErr
 	}
-	defer logFile.Close()
+	defer file.Close()
 
-	logger := log.New(logFile, "", log.LstdFlags)
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
 
-	if success {
-		logger.Printf("Request successful | Duration: %v\n", duration)
-	} else {
-		logger.Printf("Request failed     | Duration: %v | Error: %v\n", duration, err)
+	status := "success"
+	errMsg := ""
+	if !success {
+		status = "failure"
+		errMsg = err.Error()
 	}
 
-	return nil
+	record := []string{
+		time.Now().Format(time.RFC3339),
+		url,
+		status,
+		duration.String(),
+		errMsg,
+	}
+
+	return writer.Write(record)
 }
