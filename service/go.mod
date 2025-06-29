@@ -1,4 +1,4 @@
-module github.com/bruno-chavez/go-microservice-template
+module rimcs/metafor-blueprint
 
 go 1.16
 

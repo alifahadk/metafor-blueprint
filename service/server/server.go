@@ -2,10 +2,10 @@
 package server
 
 import (
-	"github.com/bruno-chavez/go-microservice-template/handlers"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"os"
+	"rimcs/metafor-blueprint/handlers"
 	"time"
 )
 
