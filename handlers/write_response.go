@@ -1,22 +1,22 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-// Helper function for easily writing response messages
 func writeResponse(w http.ResponseWriter, status int, key, value string) error {
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	info := []byte(fmt.Sprintf(`{"%v": "%v"}`, key, value))
-
-	_, err := w.Write(info)
+	resp := map[string]string{key: value}
+	data, err := json.Marshal(resp)
 	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "failed to encode response: %v"}`, err), http.StatusInternalServerError)
 		return err
 	}
 
-	return nil
+	_, err = w.Write(data)
+	return err
 }
