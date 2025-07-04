@@ -1,5 +1,3 @@
-// go-microservice-template main purpose is to be a starting point
-// for a REST API in Go. Reducing boilerplate writing and speeding up development of new microservices
 package main
 
 import (

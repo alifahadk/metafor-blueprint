@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 // Info is used for health checking as well as outputting current app version
