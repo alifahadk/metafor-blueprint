@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"rimcs/metafor-blueprint/server"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
