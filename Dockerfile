@@ -1,5 +1,4 @@
 FROM golang:1.16-alpine as builder
-
 WORKDIR /app
 
 # Creates non root user
@@ -20,10 +19,10 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server
-
-
-FROM scratch
-
+RUN pwd
+RUN ls -l
+FROM alpine
+WORKDIR /app
 ENV PORT=8080
 
 # Non root user info
@@ -37,6 +36,6 @@ COPY --from=builder /app/server .
 
 # Running as appuser
 USER appuser:appuser
-
+RUN ls -l 
 EXPOSE ${PORT}
 ENTRYPOINT ["/server"]
