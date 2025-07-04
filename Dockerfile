@@ -18,9 +18,8 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server
-RUN pwd
-RUN ls -l
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build 
+
 FROM alpine
 WORKDIR /app
 ENV PORT=8080
@@ -32,10 +31,9 @@ COPY --from=builder /etc/group /etc/group
 # Certs for making https requests
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=builder /app/server .
+COPY --from=builder /app .
 
 # Running as appuser
 USER appuser:appuser
-RUN ls -l 
 EXPOSE ${PORT}
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["./metafor-blueprint"]

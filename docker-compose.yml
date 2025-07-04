@@ -1,6 +1,6 @@
 services:
   server:
     image: server
-    build: ./service
+    build: .
     ports:
       - "8080:8080"
