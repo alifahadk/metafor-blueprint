@@ -16,7 +16,7 @@ func TestHandler_Info(t *testing.T) {
 	h(res, req, nil)
 
 	result := res.Body.String()
-	expected := `{"version": "0.0.1"}`
+	expected := `{"version":"0.0.1"}`
 
 	if res.Code != 200 {
 		t.Errorf("Expected HTTP response 200 but got %d", res.Code)
