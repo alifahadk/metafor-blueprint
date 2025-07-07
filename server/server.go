@@ -28,6 +28,7 @@ func NewServer(h *handlers.Handler) *http.Server {
 		})
 		handlerWithCORS := corsConfig.Handler(router)*/
 
+	//TODO: What to do about these?
 	srvr := &http.Server{
 		Addr:         ":" + os.Getenv("PORT"),
 		Handler:      router, // replace it with handlerWithCORS if cors is needed

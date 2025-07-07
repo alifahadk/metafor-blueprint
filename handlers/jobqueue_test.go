@@ -9,15 +9,8 @@ import (
 )
 
 func TestWorkloadHandler_SubmitsJob(t *testing.T) {
-	jobQueue := make(chan workerpool.Job, 1)
 
-	handler := &Handler{JobQueue: jobQueue}
-
-	// Simulate a worker that immediately completes the job
-	go func() {
-		job := <-jobQueue
-		close(job.Done) // simulate job completion
-	}()
+	handler := NewHandler()
 
 	req := httptest.NewRequest("GET", "/workload?work=test:1ms", nil)
 	w := httptest.NewRecorder()

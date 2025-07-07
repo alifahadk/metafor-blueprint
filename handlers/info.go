@@ -12,6 +12,8 @@ import (
 func (h Handler) Info() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
+		println("Info endpoint called")
+
 		err := writeResponse(w, 200, "version", "0.0.1")
 		if err != nil {
 			log.Println(fmt.Errorf("error writing response: %w", err))

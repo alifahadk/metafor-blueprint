@@ -35,7 +35,14 @@ func (h Handler) Workload() httprouter.Handle {
 		}
 
 		done := make(chan struct{})
-		job := workerpool.Job{Name: name, Duration: duration, Done: done}
+		job := workerpool.Job{Name: name, Duration: duration, Done: done, DownstreamCalls: []workerpool.DownstreamCall{
+			{
+				Endpoint: "/info",
+				URL:      "http://localhost:8080",
+				Type:     false,
+				Retry:    false,
+			},
+		}}
 
 		select {
 		case h.JobQueue <- job:

@@ -12,6 +12,6 @@ type Handler struct {
 
 // NewHandler creates and returns a Handler struct
 func NewHandler() *Handler {
-	jobQueue := workerpool.StartWorkerPool(4, 10)
+	jobQueue := workerpool.StartWorkerPool(4, 10) //TODO: get these as environment params / command line args
 	return &Handler{JobQueue: jobQueue}
 }
