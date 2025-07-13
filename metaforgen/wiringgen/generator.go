@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"metaforgen/config"
+	"metaforgen/utils"
 )
 
 type DockerSpecData struct {
@@ -22,6 +23,7 @@ type DockerService struct {
 	ProcessID          string
 	Container          string
 	WorkflowModulePath string
+	Dependencies       []string
 }
 
 type MainTemplateData struct {
@@ -33,6 +35,7 @@ type MainTemplateData struct {
 
 func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir string) error {
 	var services []DockerService
+	depGraph := utils.ExtractDependencies(cfg)
 
 	for _, srv := range cfg.Servers {
 		svcID := fmt.Sprintf("ServiceSvc%sImpl", srv.Name)
@@ -41,6 +44,8 @@ func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir s
 		process := strings.ReplaceAll(varName, "svc", "process")
 		container := strings.ReplaceAll(varName, "svc", "container")
 
+		dependencies := depGraph[varName]
+
 		services = append(services, DockerService{
 			VarName:            varName,
 			ServiceID:          svcID,
@@ -48,8 +53,10 @@ func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir s
 			ProcessID:          process,
 			Container:          container,
 			WorkflowModulePath: workflowModulePath,
+			Dependencies:       dependencies,
 		})
 	}
+
 	err := os.MkdirAll(filepath.Join(outputDir, "specs"), 0755)
 	if err != nil {
 		return err

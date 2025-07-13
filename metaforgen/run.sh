@@ -5,5 +5,5 @@ cp -r workerpool ./output
 cd output/wiring
 go mod download
 go get
-# go run main.go -o build -w docker
+go run main.go -o build -w docker
 cd ../../

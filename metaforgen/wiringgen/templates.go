@@ -58,7 +58,6 @@ func makeDockerSpec(spec wiring.WiringSpec) ([]string, error) {
 	var containers []string
 
 	applyLoggerDefaults := func(service_name string) string {
-
 		procName := strings.ReplaceAll(service_name, "service", "process")
 		cntrName := strings.ReplaceAll(service_name, "service", "container")
 		workerpool.Instrument(spec, service_name)
@@ -66,11 +65,13 @@ func makeDockerSpec(spec wiring.WiringSpec) ([]string, error) {
 		goproc.CreateProcess(spec, procName, service_name)
 		return linuxcontainer.CreateContainer(spec, cntrName, procName)
 	}
-	
+
 {{range .Services}}
-	{{.VarName}} := workflow.Service[*{{.Package}}.{{.ServiceID}}](spec, "{{.VarName}}")
+	{{.VarName}} := workflow.Service[*{{.Package}}.{{.ServiceID}}](spec, "{{.VarName}}"
+	{{- range .Dependencies}}, "{{.}}"{{- end}})
 	containers = append(containers, applyLoggerDefaults({{.VarName}}))
 {{end}}
+
 	return containers, nil
 }
 `
