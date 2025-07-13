@@ -47,7 +47,7 @@ func GenerateServices(cfg config.SystemConfig, workflowModulePath, outDir string
 	}
 
 	for _, server := range cfg.Servers {
-		serviceName := fmt.Sprintf("svc_%s", server.Name)
+		serviceName := fmt.Sprintf("svc%s", server.Name)
 		serviceDir := filepath.Join(outDir, serviceName)
 		if err := os.MkdirAll(serviceDir, 0755); err != nil {
 			return err
@@ -62,13 +62,13 @@ func GenerateServices(cfg config.SystemConfig, workflowModulePath, outDir string
 			var downstreamCalls []DownstreamCall
 
 			for _, ds := range apiCfg.DownstreamServices {
-				targetService := fmt.Sprintf("svc_%s", ds.Target)
+				targetService := fmt.Sprintf("svc%s", ds.Target)
 				if targetService == "" {
 					continue
 				}
 
 				importPath := fmt.Sprintf("%s/%s", workflowModulePath, targetService)
-				suffix := strings.TrimPrefix(targetService, "svc_")
+				suffix := strings.TrimPrefix(targetService, "svc")
 				fieldName := targetService + utils.ToTitle(suffix)
 
 				if _, ok := depMap[targetService]; !ok && targetService != serviceName {

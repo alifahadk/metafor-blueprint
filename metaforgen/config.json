@@ -5,14 +5,7 @@
             "qsize": 100,
             "threadpool": 1,
             "apis": {
-                "insert": {
-                    "processing_rate": 10,
-                    "downstream_services": []
-                },
-                "get": {
-                    "processing_rate": 10,
-                    "downstream_services": []
-                },
+              
                 "put": {
                     "processing_rate": 20,
                     "downstream_services": []
@@ -44,15 +37,8 @@
                 "get": {
                     "processing_rate": 10,
                     "downstream_services": []
-                },
-                "put": {
-                    "processing_rate": 20,
-                    "downstream_services": []
-                },
-                "list": {
-                    "processing_rate": 2,
-                    "downstream_services": []
                 }
+            
             }
         }
     ],

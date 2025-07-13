@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"metaforgen/config"
-	"metaforgen/utils"
 )
 
 type DockerSpecData struct {
@@ -36,11 +35,11 @@ func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir s
 	var services []DockerService
 
 	for _, srv := range cfg.Servers {
-		svcID := utils.ToTitle(fmt.Sprintf("Service%sImpl", srv.Name))
-		pkgName := fmt.Sprintf("svc_%s", srv.Name)
-		varName := fmt.Sprintf("svc_%s", srv.Name)
-		process := strings.ReplaceAll(varName, "svc_", "process")
-		container := strings.ReplaceAll(varName, "svc_", "container")
+		svcID := fmt.Sprintf("ServiceSvc%sImpl", srv.Name)
+		pkgName := fmt.Sprintf("svc%s", srv.Name)
+		varName := fmt.Sprintf("svc%s", srv.Name)
+		process := strings.ReplaceAll(varName, "svc", "process")
+		container := strings.ReplaceAll(varName, "svc", "container")
 
 		services = append(services, DockerService{
 			VarName:            varName,
