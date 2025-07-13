@@ -1,0 +1,68 @@
+{
+    "servers": [
+        {
+            "name": "52",
+            "qsize": 100,
+            "threadpool": 1,
+            "apis": {
+                "insert": {
+                    "processing_rate": 10,
+                    "downstream_services": []
+                },
+                "get": {
+                    "processing_rate": 10,
+                    "downstream_services": []
+                },
+                "put": {
+                    "processing_rate": 20,
+                    "downstream_services": []
+                },
+                "list": {
+                    "processing_rate": 2,
+                    "downstream_services": []
+                }
+            }
+        },
+        {
+            "name": "server2",
+            "qsize": 20,
+            "threadpool": 1,
+            "apis": {
+                "insert": {
+                    "processing_rate": 10,
+                    "downstream_services": [
+                        {
+                            "source": "server2",
+                            "target": "52",
+                            "api": "list",
+                            "blocking": true,
+                            "timeout": 10,
+                            "retry": 3
+                        }
+                    ]
+                },
+                "get": {
+                    "processing_rate": 10,
+                    "downstream_services": []
+                },
+                "put": {
+                    "processing_rate": 20,
+                    "downstream_services": []
+                },
+                "list": {
+                    "processing_rate": 2,
+                    "downstream_services": []
+                }
+            }
+        }
+    ],
+    "sources": [
+        {
+            "name": "client",
+            "api": "insert",
+            "arrival_rate": 9.5,
+            "timeout": 3,
+            "retries": 4
+        }
+    ]
+}
