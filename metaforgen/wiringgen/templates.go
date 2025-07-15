@@ -58,8 +58,8 @@ func makeDockerSpec(spec wiring.WiringSpec) ([]string, error) {
 	var containers []string
 
 	applyLoggerDefaults := func(service_name string) string {
-		procName := strings.ReplaceAll(service_name, "service", "process")
-		cntrName := strings.ReplaceAll(service_name, "service", "container")
+		procName := strings.ReplaceAll(service_name, "svc", "process")
+		cntrName := strings.ReplaceAll(service_name, "svc", "container")
 		workerpool.Instrument(spec, service_name)
 		http.Deploy(spec, service_name)
 		goproc.CreateProcess(spec, procName, service_name)
