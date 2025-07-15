@@ -10,8 +10,10 @@ type SystemConfig struct {
 }
 
 type Server struct {
-	Name string         `json:"name"`
-	APIs map[string]API `json:"apis"`
+	Name       string         `json:"name"`
+	ThreadPool uint           `json:"threadpool"`
+	QueueSize  uint           `json:"qsize"`
+	APIs       map[string]API `json:"apis"`
 }
 
 type API struct {
@@ -20,9 +22,11 @@ type API struct {
 }
 
 type DownstreamAPI struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-	API    string `json:"api"`
+	Source  string `json:"source"`
+	Target  string `json:"target"`
+	API     string `json:"api"`
+	Timeout int    `json:"timeout"`
+	Retry   int    `json:"retry"`
 }
 
 func LoadConfig(path string) (SystemConfig, error) {

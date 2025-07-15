@@ -37,3 +37,32 @@ func ExtractDependencies(cfg config.SystemConfig) map[string][]string {
 
 	return depGraph
 }
+func ExtractServerConfig(cfg config.SystemConfig) map[string]map[string]int {
+	RTGraph := make(map[string]map[string]int)
+
+	for _, server := range cfg.Servers {
+		serviceName := fmt.Sprintf("svc%s", server.Name)
+		seen := map[string]struct{}{}
+		RTGraph[serviceName] = make(map[string]int)
+		RTGraph[serviceName]["threadpool"] = int(server.ThreadPool)
+		RTGraph[serviceName]["queue_size"] = int(server.QueueSize)
+
+		for _, apiCfg := range server.APIs {
+
+			for _, ds := range apiCfg.DownstreamServices {
+				targetService := fmt.Sprintf("svc%s", ds.Target)
+				if targetService == "" || targetService == serviceName {
+					continue
+				}
+				// Avoid duplicate parameters. Only store the first retry/timeout pair you spot. Apply it across the whole client server
+				if _, exists := seen[targetService]; !exists {
+					RTGraph[serviceName]["retry"] = ds.Retry
+					RTGraph[serviceName]["timeout"] = ds.Timeout
+
+					seen[targetService] = struct{}{}
+				}
+			}
+		}
+	}
+	return RTGraph
+}

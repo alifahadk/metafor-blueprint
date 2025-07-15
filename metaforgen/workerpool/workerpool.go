@@ -24,10 +24,12 @@ type serverArgs struct {
 	IfaceName       string
 	Imports         *gogen.Imports
 	ServerIfaceName string
+	QueueSize       uint
+	ThreadCount     uint
 }
 
 // [Instrument] can be called from the wiring specification to add logging statements to every method in both the server and client side code of Service with `serviceName`.
-func Instrument(spec wiring.WiringSpec, serviceName string) {
+func Instrument(spec wiring.WiringSpec, serviceName string, threadCount, queueSize uint) {
 	// Define the names for the wrapper nodes we are adding to the Blueprint IR
 	wrapper_name := serviceName + ".hello.instrument.server"
 	client_wrapper_name := serviceName + ".hello.instrument.client"
@@ -51,7 +53,7 @@ func Instrument(spec wiring.WiringSpec, serviceName string) {
 		}
 
 		// Instantiate the IRNode
-		return newHelloInstrumentServerWrapper(wrapper_name, server)
+		return newHelloInstrumentServerWrapper(wrapper_name, server, threadCount, queueSize)
 	})
 
 	// Attach the Hello wrapper node to the client-side node chain of the desired service
@@ -79,6 +81,8 @@ type HelloInstrumentServerWrapper struct {
 	Wrapped      golang.Service
 
 	outputPackage string
+	QueueSize     uint
+	ThreadCount   uint
 }
 
 // Implements ir.IRNode
@@ -99,7 +103,7 @@ func (node *HelloInstrumentServerWrapper) AddInterfaces(builder golang.ModuleBui
 	return node.Wrapped.AddInterfaces(builder)
 }
 
-func newHelloInstrumentServerWrapper(name string, server ir.IRNode) (*HelloInstrumentServerWrapper, error) {
+func newHelloInstrumentServerWrapper(name string, server ir.IRNode, threadCount, queueSize uint) (*HelloInstrumentServerWrapper, error) {
 	serverNode, ok := server.(golang.Service)
 	if !ok {
 		return nil, blueprint.Errorf("tutorial server wrapper requires %s to be a golang service but got %s", server.Name(), reflect.TypeOf(server).String())
@@ -108,6 +112,8 @@ func newHelloInstrumentServerWrapper(name string, server ir.IRNode) (*HelloInstr
 	node := &HelloInstrumentServerWrapper{}
 	node.InstanceName = name
 	node.Wrapped = serverNode
+	node.QueueSize = queueSize
+	node.ThreadCount = threadCount
 	node.outputPackage = "tutorial"
 
 	return node, nil
@@ -124,7 +130,7 @@ func (node *HelloInstrumentServerWrapper) GenerateFuncs(builder golang.ModuleBui
 	if err != nil {
 		return err
 	}
-	return generateServerInstrumentHandler(builder, iface, node.outputPackage)
+	return generateServerInstrumentHandler(builder, iface, node.outputPackage, node.ThreadCount, node.QueueSize)
 }
 
 // Implements golang.Instantiable
@@ -152,19 +158,21 @@ func (node *HelloInstrumentServerWrapper) AddInstantiation(builder golang.Namesp
 	return builder.DeclareConstructor(node.InstanceName, constructor, []ir.IRNode{node.Wrapped})
 }
 
-func generateServerInstrumentHandler(builder golang.ModuleBuilder, wrapped *gocode.ServiceInterface, outputPackage string) error {
+func generateServerInstrumentHandler(builder golang.ModuleBuilder, wrapped *gocode.ServiceInterface, outputPackage string, threadCount, queueSize uint) error {
 	pkg, err := builder.CreatePackage(outputPackage)
 	if err != nil {
 		return err
 	}
 
 	server := &serverArgs{
-		Package:   pkg,
-		Service:   wrapped,
-		Iface:     wrapped,
-		Name:      wrapped.BaseName + "_TutorialInstrumentServerWrapper",
-		IfaceName: wrapped.Name,
-		Imports:   gogen.NewImports(pkg.Name),
+		Package:     pkg,
+		Service:     wrapped,
+		Iface:       wrapped,
+		Name:        wrapped.BaseName + "_TutorialInstrumentServerWrapper",
+		IfaceName:   wrapped.Name,
+		Imports:     gogen.NewImports(pkg.Name),
+		ThreadCount: threadCount,
+		QueueSize:   queueSize,
 	}
 
 	server.Imports.AddPackages("context", "log", "fmt", "errors")
@@ -213,7 +221,7 @@ type {{.Name}} struct {
 func New_{{.Name}}(ctx context.Context, service {{.Imports.NameOf .Service.UserType}}) (*{{.Name}}, error) {
 	handler := &{{.Name}}{}
 	handler.Service = service
-	handler.Queue = StartWorkerPool(4,10)
+	handler.Queue = StartWorkerPool({{.ThreadCount}},{{.QueueSize}})
 	return handler, nil
 }
 

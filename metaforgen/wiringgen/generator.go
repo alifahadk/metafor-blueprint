@@ -24,6 +24,10 @@ type DockerService struct {
 	Container          string
 	WorkflowModulePath string
 	Dependencies       []string
+	Retry              int
+	Timeout            int
+	QueueSize          uint
+	ThreadCount        uint
 }
 
 type MainTemplateData struct {
@@ -36,6 +40,7 @@ type MainTemplateData struct {
 func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir string) error {
 	var services []DockerService
 	depGraph := utils.ExtractDependencies(cfg)
+	ServerConfig := utils.ExtractServerConfig(cfg)
 
 	for _, srv := range cfg.Servers {
 		svcID := fmt.Sprintf("ServiceSvc%sImpl", srv.Name)
@@ -45,7 +50,22 @@ func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir s
 		container := strings.ReplaceAll(varName, "svc", "container")
 
 		dependencies := depGraph[varName]
-
+		retry, exists := ServerConfig[varName]["retry"]
+		if !exists {
+			retry = 0
+		}
+		timeout, exists := ServerConfig[varName]["timeout"]
+		if !exists {
+			timeout = 0
+		}
+		threadPool, exists := ServerConfig[varName]["threadpool"]
+		if !exists {
+			timeout = 0
+		}
+		queueSize, exists := ServerConfig[varName]["queue_size"]
+		if !exists {
+			timeout = 0
+		}
 		services = append(services, DockerService{
 			VarName:            varName,
 			ServiceID:          svcID,
@@ -54,6 +74,10 @@ func GenerateWiringSpec(cfg config.SystemConfig, workflowModulePath, outputDir s
 			Container:          container,
 			WorkflowModulePath: workflowModulePath,
 			Dependencies:       dependencies,
+			Retry:              retry,
+			Timeout:            timeout,
+			ThreadCount:        uint(threadPool),
+			QueueSize:          uint(queueSize),
 		})
 	}
 

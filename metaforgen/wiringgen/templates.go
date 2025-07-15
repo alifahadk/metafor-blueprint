@@ -36,12 +36,16 @@ const DockerSpecTemplate = `package specs
 
 import (
 	"strings"
+	"strconv"
+	"fmt"
 	"github.com/blueprint-uservices/blueprint/blueprint/pkg/wiring"
 	"github.com/blueprint-uservices/blueprint/plugins/cmdbuilder"
 	"github.com/blueprint-uservices/blueprint/plugins/goproc"
 	"github.com/blueprint-uservices/blueprint/plugins/http"
 	"github.com/blueprint-uservices/blueprint/plugins/linuxcontainer"
 	"github.com/blueprint-uservices/blueprint/plugins/workflow"
+	"github.com/blueprint-uservices/blueprint/plugins/retries"
+	"github.com/blueprint-uservices/blueprint/plugins/timeouts"
 	"{{.RootModule}}/workerpool"
 {{- range .Services}}
 	"{{.WorkflowModulePath}}/{{.Package}}"
@@ -57,10 +61,20 @@ var Docker = cmdbuilder.SpecOption{
 func makeDockerSpec(spec wiring.WiringSpec) ([]string, error) {
 	var containers []string
 
-	applyLoggerDefaults := func(service_name string) string {
+	applyLoggerDefaults := func(service_name string,retry int64, timeout string,threadCount, queueSize uint) string {
 		procName := strings.ReplaceAll(service_name, "svc", "process")
 		cntrName := strings.ReplaceAll(service_name, "svc", "container")
-		workerpool.Instrument(spec, service_name)
+		if retry>0{
+			retries.AddRetries(spec, service_name, retry)
+		}
+		if intVal, err := strconv.Atoi(timeout); intVal > 0 && err == nil {
+			timeouts.Add(spec, service_name, timeout+"s")
+		}
+		if threadCount==0 || queueSize==0 {
+
+			panic(fmt.Errorf("Invalid values for threadCount / queueSize!"))
+		}
+		workerpool.Instrument(spec, service_name,threadCount,queueSize)
 		http.Deploy(spec, service_name)
 		goproc.CreateProcess(spec, procName, service_name)
 		return linuxcontainer.CreateContainer(spec, cntrName, procName)
@@ -69,7 +83,7 @@ func makeDockerSpec(spec wiring.WiringSpec) ([]string, error) {
 {{range .Services}}
 	{{.VarName}} := workflow.Service[*{{.Package}}.{{.ServiceID}}](spec, "{{.VarName}}"
 	{{- range .Dependencies}}, "{{.}}"{{- end}})
-	containers = append(containers, applyLoggerDefaults({{.VarName}}))
+	containers = append(containers, applyLoggerDefaults({{.VarName}},{{.Retry}},"{{.Timeout}}",{{.ThreadCount}},{{.QueueSize}}))
 {{end}}
 
 	return containers, nil
