@@ -2,7 +2,7 @@ package wiringgen
 
 const GoModTemplate = `module {{.ModuleName}}
 
-go 1.22
+go 1.20
 
 require {{.WorkflowModulePath}} v0.0.0
 replace {{.WorkflowModulePath}} => ../{{.WorkflowModuleName}}
