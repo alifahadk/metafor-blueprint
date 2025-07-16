@@ -25,7 +25,7 @@ type ServiceData struct {
 
 type MethodData struct {
 	Name          string
-	SleepDuration int
+	SleepDuration float32
 }
 
 type Dependency struct {
@@ -91,7 +91,7 @@ func GenerateServices(cfg config.SystemConfig, workflowModulePath, outDir string
 
 			methods = append(methods, MethodData{
 				Name:          methodName,
-				SleepDuration: int(apiCfg.ProcessingRate),
+				SleepDuration: float32(apiCfg.ProcessingRate),
 			})
 		}
 

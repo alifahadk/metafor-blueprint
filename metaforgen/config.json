@@ -2,43 +2,18 @@
     "servers": [
         {
             "name": "52",
-            "qsize": 100,
+            "qsize": 150,
             "threadpool": 1,
             "apis": {
               
-                "put": {
-                    "processing_rate": 20,
-                    "downstream_services": []
-                },
-                "list": {
-                    "processing_rate": 2,
-                    "downstream_services": []
-                }
-            }
-        },
-        {
-            "name": "server2",
-            "qsize": 20,
-            "threadpool": 1,
-            "apis": {
                 "insert": {
-                    "processing_rate": 10,
-                    "downstream_services": [
-                        {
-                            "source": "server2",
-                            "target": "52",
-                            "api": "list",
-                            "blocking": true,
-                            "timeout": 10,
-                            "retry": 3
-                        }
-                    ]
+                    "processing_rate": 100,
+                    "downstream_services": []
                 },
-                "get": {
-                    "processing_rate": 10,
+                "delete": {
+                    "processing_rate": 100,
                     "downstream_services": []
                 }
-            
             }
         }
     ],
@@ -46,9 +21,17 @@
         {
             "name": "client",
             "api": "insert",
-            "arrival_rate": 9.5,
-            "timeout": 3,
-            "retries": 4
+            "arrival_rate": 4.75,
+            "timeout": 9,
+            "retries": 3
+        },
+
+        {
+            "name": "client",
+            "api": "delete",
+            "arrival_rate": 4.75,
+            "timeout": 9,
+            "retries": 3
         }
     ]
 }

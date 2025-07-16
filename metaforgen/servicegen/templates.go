@@ -44,7 +44,7 @@ func {{.Constructor}}(ctx context.Context{{range .Dependencies}}, {{.FieldName}}
 {{range .Methods}}
 func (s *{{$.ImplName}}) {{.Name}}(ctx context.Context) error {
 	fmt.Println("{{.Name}} called on {{$.ServiceName}}")
-	time.Sleep({{.SleepDuration}} * time.Second)
+	time.Sleep({{.SleepDuration}} * time.Millisecond)
 	{{- with index $.MethodDownstreams .Name}}
 	{{- range .}}
 	if err := s.{{.FieldName}}.{{.APIName}}(ctx); err != nil {
