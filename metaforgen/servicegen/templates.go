@@ -2,7 +2,7 @@ package servicegen
 
 const GoModTemplate = `module {{.ModuleName}}
 
-go 1.22
+go 1.20
 
 require (
 	github.com/blueprint-uservices/blueprint/runtime v0.0.0-20240118214956-4c7cf2978ee5
