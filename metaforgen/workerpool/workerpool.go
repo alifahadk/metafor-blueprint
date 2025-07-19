@@ -31,8 +31,7 @@ type serverArgs struct {
 // [Instrument] can be called from the wiring specification to add logging statements to every method in both the server and client side code of Service with `serviceName`.
 func Instrument(spec wiring.WiringSpec, serviceName string, threadCount, queueSize uint) {
 	// Define the names for the wrapper nodes we are adding to the Blueprint IR
-	wrapper_name := serviceName + ".hello.instrument.server"
-	client_wrapper_name := serviceName + ".hello.instrument.client"
+	wrapper_name := serviceName + ".workerpool.server"
 
 	// Get the pointer for the serviceName to ensure that the newly defined wrapper IR node will be attached to the node chain of the desired service
 	ptr := pointer.GetPointer(spec, serviceName)
@@ -41,38 +40,22 @@ func Instrument(spec wiring.WiringSpec, serviceName string, threadCount, queueSi
 		return
 	}
 
-	// Attach the Hello wrapper node to the server-side node chain of the desired service
 	serverNext := ptr.AddDstModifier(spec, wrapper_name)
 
 	// Define the IRNode for the wrapper node and add it to the wiring specification
-	spec.Define(wrapper_name, &HelloInstrumentServerWrapper{}, func(ns wiring.Namespace) (ir.IRNode, error) {
-		// Get the IRNode that will be wrapped by HelloWrapper
+	spec.Define(wrapper_name, &WorkerPoolServerWrapper{}, func(ns wiring.Namespace) (ir.IRNode, error) {
 		var server golang.Service
 		if err := ns.Get(serverNext, &server); err != nil {
-			return nil, blueprint.Errorf("Tutorial Plugin %s expected %s to be a golang.Service, but encountered %s", wrapper_name, serverNext, err)
+			return nil, blueprint.Errorf("Worker Pool Plugin %s expected %s to be a golang.Service, but encountered %s", wrapper_name, serverNext, err)
 		}
 
 		// Instantiate the IRNode
-		return newHelloInstrumentServerWrapper(wrapper_name, server, threadCount, queueSize)
-	})
-
-	// Attach the Hello wrapper node to the client-side node chain of the desired service
-	clientNext := ptr.AddSrcModifier(spec, client_wrapper_name)
-
-	// Define the IRNode for the wrapper node and add it to the wiring specification
-	spec.Define(client_wrapper_name, &HelloInstrumentClientWrapper{}, func(ns wiring.Namespace) (ir.IRNode, error) {
-		// Get the IRNode that will be wrapped by HelloWrapper
-		var client golang.Service
-		if err := ns.Get(clientNext, &client); err != nil {
-			return nil, blueprint.Errorf("Tutorial Plugin %s expected %s to be a golang.Service, but encountered %s", wrapper_name, clientNext, err)
-		}
-
-		return newHelloInstrumentClientWrapper(client_wrapper_name, client)
+		return newWorkerPoolServerWrapper(wrapper_name, server, threadCount, queueSize)
 	})
 }
 
 // Blueprint IRNode for representing the wrapper node that instruments every server-side method in the node that gets wrapped
-type HelloInstrumentServerWrapper struct {
+type WorkerPoolServerWrapper struct {
 	golang.Service
 	golang.GeneratesFuncs
 	golang.Instantiable
@@ -86,46 +69,46 @@ type HelloInstrumentServerWrapper struct {
 }
 
 // Implements ir.IRNode
-func (node *HelloInstrumentServerWrapper) ImplementsGolangNode() {}
+func (node *WorkerPoolServerWrapper) ImplementsGolangNode() {}
 
 // Implements ir.IRNode
-func (node *HelloInstrumentServerWrapper) Name() string {
+func (node *WorkerPoolServerWrapper) Name() string {
 	return node.InstanceName
 }
 
 // Implements ir.IRNode
-func (node *HelloInstrumentServerWrapper) String() string {
-	return node.Name() + " = HelloInstrumentServerWrapper(" + node.Wrapped.Name() + ")"
+func (node *WorkerPoolServerWrapper) String() string {
+	return node.Name() + " = WorkerPoolServerWrapper(" + node.Wrapped.Name() + ")"
 }
 
 // Implements golang.ProvidesInterface
-func (node *HelloInstrumentServerWrapper) AddInterfaces(builder golang.ModuleBuilder) error {
+func (node *WorkerPoolServerWrapper) AddInterfaces(builder golang.ModuleBuilder) error {
 	return node.Wrapped.AddInterfaces(builder)
 }
 
-func newHelloInstrumentServerWrapper(name string, server ir.IRNode, threadCount, queueSize uint) (*HelloInstrumentServerWrapper, error) {
+func newWorkerPoolServerWrapper(name string, server ir.IRNode, threadCount, queueSize uint) (*WorkerPoolServerWrapper, error) {
 	serverNode, ok := server.(golang.Service)
 	if !ok {
-		return nil, blueprint.Errorf("tutorial server wrapper requires %s to be a golang service but got %s", server.Name(), reflect.TypeOf(server).String())
+		return nil, blueprint.Errorf("Worker pool server wrapper requires %s to be a golang service but got %s", server.Name(), reflect.TypeOf(server).String())
 	}
 
-	node := &HelloInstrumentServerWrapper{}
+	node := &WorkerPoolServerWrapper{}
 	node.InstanceName = name
 	node.Wrapped = serverNode
 	node.QueueSize = queueSize
 	node.ThreadCount = threadCount
-	node.outputPackage = "tutorial"
+	node.outputPackage = "workerpool"
 
 	return node, nil
 }
 
 // Implements service.ServiceNode
-func (node *HelloInstrumentServerWrapper) GetInterface(ctx ir.BuildContext) (service.ServiceInterface, error) {
+func (node *WorkerPoolServerWrapper) GetInterface(ctx ir.BuildContext) (service.ServiceInterface, error) {
 	return node.Wrapped.GetInterface(ctx)
 }
 
 // Implements golang.GeneratesFuncs
-func (node *HelloInstrumentServerWrapper) GenerateFuncs(builder golang.ModuleBuilder) error {
+func (node *WorkerPoolServerWrapper) GenerateFuncs(builder golang.ModuleBuilder) error {
 	iface, err := golang.GetGoInterface(builder, node)
 	if err != nil {
 		return err
@@ -134,7 +117,7 @@ func (node *HelloInstrumentServerWrapper) GenerateFuncs(builder golang.ModuleBui
 }
 
 // Implements golang.Instantiable
-func (node *HelloInstrumentServerWrapper) AddInstantiation(builder golang.NamespaceBuilder) error {
+func (node *WorkerPoolServerWrapper) AddInstantiation(builder golang.NamespaceBuilder) error {
 	if builder.Visited(node.InstanceName) {
 		return nil
 	}
@@ -147,7 +130,7 @@ func (node *HelloInstrumentServerWrapper) AddInstantiation(builder golang.Namesp
 	constructor := &gocode.Constructor{
 		Package: builder.Module().Info().Name + "/" + node.outputPackage,
 		Func: gocode.Func{
-			Name: fmt.Sprintf("New_%v_TutorialInstrumentServerWrapper", iface.BaseName),
+			Name: fmt.Sprintf("New_%v_WorkerPoolServerWrapper", iface.BaseName),
 			Arguments: []gocode.Variable{
 				{Name: "ctx", Type: &gocode.UserType{Package: "context", Name: "Context"}},
 				{Name: "service", Type: iface},
@@ -168,7 +151,7 @@ func generateServerInstrumentHandler(builder golang.ModuleBuilder, wrapped *goco
 		Package:     pkg,
 		Service:     wrapped,
 		Iface:       wrapped,
-		Name:        wrapped.BaseName + "_TutorialInstrumentServerWrapper",
+		Name:        wrapped.BaseName + "_WorkerPoolServerWrapper",
 		IfaceName:   wrapped.Name,
 		Imports:     gogen.NewImports(pkg.Name),
 		ThreadCount: threadCount,
@@ -177,12 +160,12 @@ func generateServerInstrumentHandler(builder golang.ModuleBuilder, wrapped *goco
 
 	server.Imports.AddPackages("context", "log", "fmt", "errors")
 
-	slog.Info(fmt.Sprintf("Generating %v/%v", server.Package.PackageName, wrapped.BaseName+"_TutorialInstrumentServerWrapper"))
-	outputFile := filepath.Join(server.Package.Path, wrapped.BaseName+"_TutorialInstrumentServerWrapper.go")
-	return gogen.ExecuteTemplateToFile("Tutorial", serverInstrumentTemplate, server, outputFile)
+	slog.Info(fmt.Sprintf("Generating %v/%v", server.Package.PackageName, wrapped.BaseName+"_WorkerPoolServerWrapper"))
+	outputFile := filepath.Join(server.Package.Path, wrapped.BaseName+"_WorkerPoolServerWrapper.go")
+	return gogen.ExecuteTemplateToFile("WorkerPool", serverWrapperTemplate, server, outputFile)
 }
 
-var serverInstrumentTemplate = `// Blueprint: Auto-generated by Tutorial Plugin
+var serverWrapperTemplate = `// Blueprint: Auto-generated by Worker Pool Plugin
 package {{.Package.ShortName}}
 
 {{.Imports}}
@@ -241,142 +224,6 @@ func (handler *{{$receiver}}) {{$f.Name -}} ({{ArgVarsAndTypes $f "ctx context.C
 	default:
 		return errors.New("Job count not be executed successfully")
 	}
-}
-{{end}}
-`
-
-//Storing this for reference
-// return handler.Service.{{$f.Name}}({{ArgVars $f "ctx"}})
-
-// Blueprint IRNode for representing the wrapper node that instruments every client-side method in the node that gets wrapped
-type HelloInstrumentClientWrapper struct {
-	golang.Service
-	golang.GeneratesFuncs
-	golang.Instantiable
-
-	InstanceName string
-	Wrapped      golang.Service
-
-	outputPackage string
-}
-
-// Implements ir.IRNode
-func (node *HelloInstrumentClientWrapper) ImplementsGolangNode() {}
-
-// Implements ir.IRNode
-func (node *HelloInstrumentClientWrapper) Name() string {
-	return node.InstanceName
-}
-
-// Implements ir.IRNode
-func (node *HelloInstrumentClientWrapper) String() string {
-	return node.Name() + " = HelloInstrumentClientWrapper(" + node.Wrapped.Name() + ")"
-}
-
-// Implements golang.ProvidesInterface
-func (node *HelloInstrumentClientWrapper) AddInterfaces(builder golang.ModuleBuilder) error {
-	return node.Wrapped.AddInterfaces(builder)
-}
-
-func newHelloInstrumentClientWrapper(name string, wrapped ir.IRNode) (*HelloInstrumentClientWrapper, error) {
-	serverNode, ok := wrapped.(golang.Service)
-	if !ok {
-		return nil, blueprint.Errorf("tutorial server wrapper requires %s to be a golang service but got %s", wrapped.Name(), reflect.TypeOf(wrapped).String())
-	}
-
-	node := &HelloInstrumentClientWrapper{}
-	node.InstanceName = name
-	node.Wrapped = serverNode
-	node.outputPackage = "tutorial"
-
-	return node, nil
-}
-
-// Implements service.ServiceNode
-func (node *HelloInstrumentClientWrapper) GetInterface(ctx ir.BuildContext) (service.ServiceInterface, error) {
-	return node.Wrapped.GetInterface(ctx)
-}
-
-// Implements golang.GeneratesFuncs
-func (node *HelloInstrumentClientWrapper) GenerateFuncs(builder golang.ModuleBuilder) error {
-	iface, err := golang.GetGoInterface(builder, node)
-	if err != nil {
-		return err
-	}
-	return generateClientInstrumentHandler(builder, iface, node.outputPackage)
-}
-
-// Implements golang.Instantiable
-func (node *HelloInstrumentClientWrapper) AddInstantiation(builder golang.NamespaceBuilder) error {
-	if builder.Visited(node.InstanceName) {
-		return nil
-	}
-
-	iface, err := golang.GetGoInterface(builder, node.Wrapped)
-	if err != nil {
-		return err
-	}
-
-	constructor := &gocode.Constructor{
-		Package: builder.Module().Info().Name + "/" + node.outputPackage,
-		Func: gocode.Func{
-			Name: fmt.Sprintf("New_%v_TutorialInstrumentClientWrapper", iface.BaseName),
-			Arguments: []gocode.Variable{
-				{Name: "ctx", Type: &gocode.UserType{Package: "context", Name: "Context"}},
-				{Name: "service", Type: iface},
-			},
-		},
-	}
-
-	return builder.DeclareConstructor(node.InstanceName, constructor, []ir.IRNode{node.Wrapped})
-}
-
-func generateClientInstrumentHandler(builder golang.ModuleBuilder, wrapped *gocode.ServiceInterface, outputPackage string) error {
-	pkg, err := builder.CreatePackage(outputPackage)
-	if err != nil {
-		return err
-	}
-
-	server := &serverArgs{
-		Package:   pkg,
-		Service:   wrapped,
-		Iface:     wrapped,
-		Name:      wrapped.BaseName + "_TutorialInstrumentClientWrapper",
-		IfaceName: wrapped.Name,
-		Imports:   gogen.NewImports(pkg.Name),
-	}
-
-	server.Imports.AddPackages("context", "log")
-
-	slog.Info(fmt.Sprintf("Generating %v/%v", server.Package.PackageName, wrapped.BaseName+"_TutorialInstrumentClientWrapper"))
-	outputFile := filepath.Join(server.Package.Path, wrapped.BaseName+"_TutorialInstrumentClientWrapper.go")
-	return gogen.ExecuteTemplateToFile("Tutorial", clientInstrumentTemplate, server, outputFile)
-}
-
-var clientInstrumentTemplate = `// Blueprint: Auto-generated by Tutorial Plugin
-package {{.Package.ShortName}}
-
-{{.Imports}}
-
-
-
-
-type {{.Name}} struct {
-	Client {{.Imports.NameOf .Service.UserType}}
-}
-
-func New_{{.Name}}(ctx context.Context, client {{.Imports.NameOf .Service.UserType}}) (*{{.Name}}, error) {
-	handler := &{{.Name}}{}
-	handler.Client = client
-	return handler, nil
-}
-
-{{$service := .Service.Name -}}
-{{$receiver := .Name -}}
-{{ range $_, $f := .Service.Methods }}
-func (handler *{{$receiver}}) {{$f.Name -}} ({{ArgVarsAndTypes $f "ctx context.Context"}}) ({{RetTypes $f "error"}}) {
-	log.Println("Processing {{$f.Name}}")
-	return handler.Client.{{$f.Name}}({{ArgVars $f "ctx"}})
 }
 {{end}}
 `

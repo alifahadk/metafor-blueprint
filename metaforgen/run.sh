@@ -8,6 +8,5 @@ go get
 go run main.go -o build -w docker
 cd build/docker
 cp ../.local.env .env
-sudo docker compose build
-sudo docker compose up -d
+docker compose up -d --build
 cd ../../../../
