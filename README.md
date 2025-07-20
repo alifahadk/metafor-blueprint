@@ -79,14 +79,7 @@ p.add_server(server).add_source(src).connect ('client', 'simple')
 
 2. Run Loadgen once the emulator is up and running (from `experimentation/`)
    ```bash
-   go run loadgen.go \            
-   -normalRPS 5 \
-   -triggerRPS 15 \
-   -timeout 5s \
-   -duration 100s \
-   -triggerDuration 30s \
-   -out results-150.csv \
-   -retries 5
+   go run loadgen.go -normalRPS=5 -triggerRPS=15 -timeout=5s -duration=100s -triggerDuration=30s -out=results-150.csv -retries=5
    ```
 
 3. Create & Run Blueprint based emulator with queue size 35 (from `metaforgen/`)
@@ -96,14 +89,7 @@ p.add_server(server).add_source(src).connect ('client', 'simple')
 
 4. Run Loadgen once the emulator is up and running (from `experimentation/`)
    ```bash
-   go run loadgen.go \            
-    -normalRPS 5 \
-    -triggerRPS 15 \
-    -timeout 5s \
-    -duration 100s \
-    -triggerDuration 30s \
-    -out results-35.csv \
-    -retries 5
+   go run loadgen.go -normalRPS 5 -triggerRPS 15 -timeout 5s -duration 100s -triggerDuration 30s -out results-35.csv -retries 5
    ```
 
 5. Generate Plots by running the meta.py script passing in the the result files (from `experimentation/`)
