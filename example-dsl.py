@@ -5,7 +5,7 @@ from metafor.analysis.visualize import Visualizer
 api = {
     "insert": Work(10, [
         DependentCall(
-          "server2", "server2", "rd", Constants.CLOSED, 10, 3
+          "server2", "52", "insert", Constants.CLOSED, 10, 3
         )
     ]),
     "get": Work(10, []),

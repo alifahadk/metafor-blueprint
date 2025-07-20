@@ -1,4 +1,5 @@
 #!/bin/bash
+python3 ../metafor-json/main.py $1
 rm -rf output
 go run main.go
 cp -r workerpool ./output

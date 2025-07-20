@@ -1,5 +1,6 @@
 import ast
 import json
+import argparse
 
 class DSLParser(ast.NodeVisitor):
     def __init__(self):
@@ -165,12 +166,20 @@ class DSLParser(ast.NodeVisitor):
             "sources": self.sources
         }, indent=4)
 
-# Usage
+
 if __name__ == "__main__":
-    with open("example-dsl.py", "r") as f:
+    parser = argparse.ArgumentParser(description="Parse DSL and output JSON config")
+    parser.add_argument("input_file", help="Path to the DSL Python file")
+    parser.add_argument("-o", "--output", default="../config.json", help="Output JSON file path (default: ../config.json)")
+    args = parser.parse_args()
+
+    with open(args.input_file, "r") as f:
         tree = ast.parse(f.read())
 
-    parser = DSLParser()
-    parser.visit(tree)
-    print(parser.get_json())
+    dsl_parser = DSLParser()
+    dsl_parser.visit(tree)
+
+    with open(args.output, "w") as f:
+        f.write(dsl_parser.get_json())
+
 

@@ -57,7 +57,7 @@ func main() {
 	defer writer.Flush()
 
 	// Write CSV header
-	writer.Write([]string{"start_time_unix_nano", "duration_ns", "is_error"})
+	writer.Write([]string{"Start", "Duration", "IsError"})
 
 	var mu sync.Mutex // to synchronize writes
 
@@ -87,7 +87,7 @@ func main() {
 		go func(id int, now time.Time) {
 			defer wg.Done()
 
-			endpoint := "http://localhost:12345/Delete"
+			endpoint := "http://localhost:12345/Insert"
 
 			start := time.Now()
 

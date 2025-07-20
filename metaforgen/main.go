@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Define and parse the command-line flag
-	configPath := flag.String("config", "config.json", "Path to the configuration JSON file")
+	configPath := flag.String("config", "../config.json", "Path to the configuration JSON file")
 	flag.Parse()
 
 	// Validate the config path

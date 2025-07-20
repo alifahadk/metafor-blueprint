@@ -91,7 +91,7 @@ func GenerateServices(cfg config.SystemConfig, workflowModulePath, outDir string
 
 			methods = append(methods, MethodData{
 				Name:          methodName,
-				SleepDuration: float32(apiCfg.ProcessingRate),
+				SleepDuration: 1 / float32(apiCfg.ProcessingRate) * 1000,
 			})
 		}
 
